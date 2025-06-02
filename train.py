@@ -86,7 +86,7 @@ if __name__ == "__main__":
         help="Random seed for reproducibility.",
     )
     parser.add_argument(
-        "--num-seeds",
+        "--num_seeds",
         type=int,
         default=1,
         help="Number of seeds to roll out.",
