@@ -1,8 +1,10 @@
-import timeit
-
+import dill
 import jax
 import jax.numpy as jnp
+import os
+import timeit
 import yaml
+
 from matplotlib import pyplot as plt
 
 from rejax import get_algo
@@ -36,6 +38,12 @@ def main(algo_str, config, seed_id, num_seeds, time_fit):
     returns.block_until_ready()
 
     print(f"Achieved mean return of {returns.mean(axis=-1)[:, -1]}")
+
+    os.makedirs("checkpoints", exist_ok=True)
+    dill.dump(
+        ts.replay_buffer.data,
+        open(f"checkpoints/{config.pop('env')}_{algo_str}_{seed_id}.pkl", "wb")
+    )
 
     t = jnp.arange(returns.shape[1]) * algo.eval_freq
     colors = plt.cm.cool(jnp.linspace(0, 1, num_seeds))
