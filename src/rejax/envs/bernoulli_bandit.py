@@ -16,7 +16,6 @@ class EnvState(environment.EnvState):
 
 @struct.dataclass
 class EnvParams(environment.EnvParams):
-    num_arms: int = 2
     reward_probs: tuple[float] = (0.5, 0.5)
 
 
@@ -74,7 +73,7 @@ class BernoulliBandit(environment.Environment[EnvState, EnvParams]):
 
     def action_space(self, params: EnvParams | None = None) -> spaces.Discrete:
         """Action space of the environment."""
-        return spaces.Discrete(params.num_arms)
+        return spaces.Discrete(len(params.reward_probs))
 
     def observation_space(self, params: EnvParams) -> spaces.Box:
         """Observation space of the environment."""
@@ -84,6 +83,6 @@ class BernoulliBandit(environment.Environment[EnvState, EnvParams]):
         """State space of the environment."""
         return spaces.Dict(
             {
-                "reward_probs": spaces.Box(0, 1, (params.num_arms,), jnp.float32),
+                "reward_probs": spaces.Box(0, 1, (len(params.reward_probs),), jnp.float32),
             }
         )
