@@ -21,6 +21,36 @@ class MLP(nn.Module):
         return x
 
 
+# Bandit networks
+class TabularUCB(nn.Module):
+    num_arms: int
+    confidence: float = 1.0
+
+    def setup(self):
+        self.q_values = self.param(
+            "q_values", constant(0.0), (1, self.num_arms,)
+        )
+        self.counts = self.param(
+            "counts", constant(0), (1, self.num_arms,)
+        )
+        self.timesteps = self.param(
+            "timesteps", constant(0), ()
+        )
+    
+    def __call__(self, obs):
+        # Update the UCB values
+        ucb_values = self.q_values[obs.astype(int)] + self.confidence * jnp.sqrt(
+            jnp.log(self.timesteps + 1) / (self.counts + 1e-8)
+        )
+
+        return ucb_values
+
+    def act(self, obs):
+        # Sample an action based on UCB values
+        ucb_values = self(obs)
+        return jnp.argmax(ucb_values, axis=-1)
+
+
 # Policy networks
 
 

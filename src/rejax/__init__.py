@@ -1,4 +1,13 @@
-from rejax.algos import DQN, IQN, PPO, PQN, SAC, TD3, Algorithm
+from rejax.algos import (
+    DQN,
+    IQN,
+    PPO,
+    PQN,
+    SAC,
+    TD3,
+    UCB,
+    Algorithm,
+)
 
 _algos = {
     "dqn": DQN,
@@ -7,6 +16,7 @@ _algos = {
     "pqn": PQN,
     "sac": SAC,
     "td3": TD3,
+    "ucb": UCB,
 }
 
 
@@ -24,4 +34,5 @@ __all__ = [
     "PQN",
     "SAC",
     "TD3",
+    "UCB",
 ]

@@ -156,6 +156,41 @@ class OnPolicyMixin(VectorizedEnvMixin):
             )
 
         return ts, evaluation
+    
+
+class BanditMixin(VectorizedEnvMixin):
+    def train(self, rng=None, train_state=None):
+        if train_state is None and rng is None:
+            raise ValueError("Either train_state or rng must be provided")
+
+        ts = train_state or self.init_state(rng)
+
+        if not self.skip_initial_evaluation:
+            initial_evaluation = self.eval_callback(self, ts, ts.rng)
+
+        def eval_iteration(ts, unused):
+            # Run a few training iterations
+            ts = jax.lax.fori_loop(
+                0,
+                self.eval_freq,
+                lambda _, ts: self.train_iteration(ts),
+                ts,
+            )
+
+            # Run evaluation
+            return ts, self.eval_callback(self, ts, ts.rng)
+
+        num_evals = np.ceil(self.total_timesteps / self.eval_freq).astype(int)
+        ts, evaluation = jax.lax.scan(eval_iteration, ts, None, num_evals)
+
+        if not self.skip_initial_evaluation:
+            evaluation = jax.tree.map(
+                lambda i, ev: jnp.concatenate((jnp.expand_dims(i, 0), ev)),
+                initial_evaluation,
+                evaluation,
+            )
+
+        return ts, evaluation
 
 
 class TargetNetworkMixin(struct.PyTreeNode):

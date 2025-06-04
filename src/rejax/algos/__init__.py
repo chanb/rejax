@@ -12,6 +12,7 @@ from .ppo import PPO
 from .pqn import PQN
 from .sac import SAC
 from .td3 import TD3
+from .ucb import UCB
 
 __all__ = [
     "Algorithm",
@@ -21,6 +22,7 @@ __all__ = [
     "PQN",
     "SAC",
     "TD3",
+    "UCB",
     "EpsilonGreedyMixin",
     "NormalizeObservationsMixin",
     "ReplayBufferMixin",
