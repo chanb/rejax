@@ -106,7 +106,6 @@ class UCB(BanditMixin, Algorithm):
         return ts, transition
 
     def update(self, ts, transition):
-        print(ts.agent_ts.params)
         action_dim = ts.agent_ts.params["params"]["counts"].shape[1]
         update_mask = jnp.eye(action_dim)[transition.action]
 
