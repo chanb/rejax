@@ -48,6 +48,15 @@ class VectorizedEnvMixin(struct.PyTreeNode):
             "global_step": 0,
             "last_done": jnp.zeros(self.num_envs, dtype=bool),
         }
+    
+
+class StoreTrajectoriesMixin(VectorizedEnvMixin):
+    buffer_size: int = struct.field(pytree_node=False, default=131_072)
+
+    @register_init
+    def initialize_replay_buffer(self, rng):
+        buf = ReplayBuffer.empty(self.buffer_size, self.obs_space, self.action_space)
+        return {"store_buffer": buf}
 
 
 class ReplayBufferMixin(VectorizedEnvMixin):

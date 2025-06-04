@@ -12,19 +12,13 @@ from typing import NamedTuple
 from rejax.algos.algorithm import Algorithm, register_init
 from rejax.algos.mixins import (
     BanditMixin,
+    StoreTrajectoriesMixin,
 )
 from rejax.networks import TabularUCB
+from rejax.buffers import Minibatch
 
 
-class Transition(NamedTuple):
-    obs: chex.Array
-    action: chex.Array
-    reward: chex.Array
-    done: chex.Array
-    next_obs: chex.Array
-
-
-class UCB(BanditMixin, Algorithm):
+class UCB(BanditMixin, StoreTrajectoriesMixin, Algorithm):
     agent: nn.Module = struct.field(pytree_node=False, default=None)
 
     def make_act(self, ts):
@@ -61,6 +55,7 @@ class UCB(BanditMixin, Algorithm):
 
     def train_iteration(self, ts):
         ts, transition = self.collect_transition(ts)
+        ts = ts.replace(store_buffer=ts.store_buffer.extend(transition))
 
         # Sample minibatch
         rng, rng_sample = jax.random.split(ts.rng)
@@ -91,7 +86,7 @@ class UCB(BanditMixin, Algorithm):
             rng_steps, ts.env_state, actions, self.env_params
         )
 
-        transition = Transition(
+        transition = Minibatch(
             obs=ts.last_obs,
             action=actions,
             reward=rewards,
