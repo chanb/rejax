@@ -1,7 +1,7 @@
 ucb:
   agent_kwargs:
     confidence: 1.0
-  total_timesteps: 100_000
+  total_timesteps: 1_000_000
   eval_freq: 1000
 
 ppo:
