@@ -40,7 +40,7 @@ class TabularUCB(nn.Module):
     def __call__(self, obs):
         # Update the UCB values
         ucb_values = self.q_values[obs.astype(int)] + self.confidence * jnp.sqrt(
-            jnp.log(self.timesteps + 1) / (self.counts + 1e-8)
+            2 * jnp.log(self.timesteps + 1) / jnp.clip(self.counts, min=1)
         )
 
         return ucb_values
