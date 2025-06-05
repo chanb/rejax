@@ -1,9 +1,9 @@
 ucb:
   agent_kwargs:
     confidence: 1.0
-  total_timesteps: 10_000
+  total_timesteps: 10_00
   eval_freq: 50
-  buffer_size: 10_000
+  buffer_size: 10_00
 
 ppo:
   agent_kwargs:
@@ -23,8 +23,6 @@ ppo:
   vf_coef: 0.5
 
 dqn:
-  env: CartPole-v1
-  agent: DuelingQNetwork
   agent_kwargs:
     activation: swish
   num_envs: 1
