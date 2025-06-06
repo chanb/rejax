@@ -13,7 +13,9 @@ from rejax.algos.mixins import (
     NormalizeObservationsMixin,
     NormalizeRewardsMixin,
     OnPolicyMixin,
+    StoreTrajectoriesMixin,
 )
+from rejax.buffers import Minibatch
 from rejax.networks import DiscretePolicy, GaussianPolicy, VNetwork
 
 
@@ -32,7 +34,7 @@ class AdvantageMinibatch(struct.PyTreeNode):
     targets: chex.Array
 
 
-class PPO(OnPolicyMixin, NormalizeObservationsMixin, NormalizeRewardsMixin, Algorithm):
+class PPO(StoreTrajectoriesMixin, OnPolicyMixin, NormalizeObservationsMixin, NormalizeRewardsMixin, Algorithm):
     actor: nn.Module = struct.field(pytree_node=False, default=None)
     critic: nn.Module = struct.field(pytree_node=False, default=None)
     num_epochs: int = struct.field(pytree_node=False, default=8)
@@ -94,6 +96,16 @@ class PPO(OnPolicyMixin, NormalizeObservationsMixin, NormalizeRewardsMixin, Algo
 
     def train_iteration(self, ts):
         ts, trajectories = self.collect_trajectories(ts)
+        ts = ts.replace(store_buffer=ts.store_buffer.extend(Minibatch(
+            obs=trajectories.obs[:, 0],
+            action=trajectories.action[:, 0],
+            reward=trajectories.reward[:, 0],
+            next_obs=jnp.concatenate(
+                (trajectories.obs[1:], ts.last_obs[None]),
+                axis=0,
+            )[:, 0],
+            done=trajectories.done[:, 0],
+        )))
 
         last_val = self.critic.apply(ts.critic_ts.params, ts.last_obs)
         last_val = jnp.where(ts.last_done, 0, last_val)
