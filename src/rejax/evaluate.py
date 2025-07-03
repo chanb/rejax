@@ -14,6 +14,7 @@ class EvalState(NamedTuple):
     done: bool = False
     return_: float = 0.0
     length: int = 0
+    trajectory: dict = None
 
 
 def evaluate_single(
@@ -36,12 +37,29 @@ def evaluate_single(
             done=done,
             return_=state.return_ + reward.squeeze(),
             length=state.length + 1,
+            trajectory=dict(
+                obss=state.trajectory["obss"].at[state.length].set(state.last_obs),
+                actions=state.trajectory["actions"].at[state.length].set(action),
+                rewards=state.trajectory["rewards"].at[state.length].set(reward.squeeze()),
+                dones=state.trajectory["dones"].at[state.length].set(done),
+            ),
         )
         return state
 
     rng_reset, rng_eval = jax.random.split(rng)
     obs, env_state = env.reset(rng_reset, env_params)
-    state = EvalState(rng_eval, env_state, obs)
+
+    state = EvalState(
+        rng_eval,
+        env_state,
+        obs,
+        trajectory=dict(
+            obss=jnp.zeros((max_steps_in_episode, *obs.shape)),
+            actions=jnp.zeros((max_steps_in_episode, *act(obs, rng_eval).shape)),
+            rewards=jnp.zeros((max_steps_in_episode,)),
+            dones=jnp.zeros((max_steps_in_episode,)),
+        )
+    )
     state = jax.lax.while_loop(
         lambda s: jnp.logical_and(
             s.length < max_steps_in_episode, jnp.logical_not(s.done)
@@ -49,10 +67,10 @@ def evaluate_single(
         step,
         state,
     )
-    return state.length, state.return_
+    return state
 
 
-@partial(jax.jit, static_argnames=("act", "env", "num_seeds"))
+@partial(jax.jit, static_argnames=("act", "env", "num_seeds", "max_steps_in_episode"))
 def evaluate(
     act: Callable[[chex.Array, chex.PRNGKey], chex.Array],
     rng: chex.PRNGKey,
