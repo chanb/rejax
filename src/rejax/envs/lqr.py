@@ -46,7 +46,7 @@ class DiscreteTimeLQR(environment.Environment[EnvState, EnvParams]):
         """Performs step transitions in the environment."""
 
         # Compute reward
-        reward = state.x.T @ params.Q @ state.x + action.T @ params.R @ action
+        reward = -(state.x.T @ params.Q @ state.x + action.T @ params.R @ action)
 
         # Compute next state: x' = Ax + Bu + sigma_w * w, w ~ N(0, I)
         next_state = params.A @ state.x + params.B @ action
@@ -72,7 +72,7 @@ class DiscreteTimeLQR(environment.Environment[EnvState, EnvParams]):
         self, key: jax.Array, params: EnvParams
     ) -> tuple[jax.Array, EnvState]:
         """Performs resetting of environment."""
-        init_state = jax.random.normal(key, shape=(self.dim_x,)) * params.std_x
+        init_state = jnp.tanh(jax.random.normal(key, shape=(self.dim_x,))) * params.std_x
         state = EnvState(
             x=init_state,
             time=0,
@@ -87,7 +87,7 @@ class DiscreteTimeLQR(environment.Environment[EnvState, EnvParams]):
         """Check whether state is terminal."""
         # Check number of steps in episode termination condition
         done_steps = state.time >= params.max_steps_in_episode
-        done_threshold = jnp.all(state.x <= params.x_thres)
+        done_threshold = jnp.all(jnp.abs(state.x) <= params.x_thres)
         done_diverge = jnp.any(jnp.isnan(state.x))
 
         done = jnp.logical_or(done_steps, done_threshold)
@@ -101,7 +101,7 @@ class DiscreteTimeLQR(environment.Environment[EnvState, EnvParams]):
 
     def action_space(self, params: EnvParams | None = None) -> spaces.Discrete:
         """Action space of the environment."""
-        return spaces.Box(-1.0, 1.0, (self.dim_u,), jnp.float32)
+        return spaces.Box(-jnp.inf, jnp.inf, (self.dim_u,), jnp.float32)
 
     def observation_space(self, params: EnvParams) -> spaces.Box:
         """Observation space of the environment."""
