@@ -101,7 +101,7 @@ class DiscreteTimeLQR(environment.Environment[EnvState, EnvParams]):
 
     def action_space(self, params: EnvParams | None = None) -> spaces.Discrete:
         """Action space of the environment."""
-        return spaces.Box(-jnp.inf, jnp.inf, (self.dim_u,), jnp.float32)
+        return spaces.Box(-1.0, 1.0, (self.dim_u,), jnp.float32)
 
     def observation_space(self, params: EnvParams) -> spaces.Box:
         """Observation space of the environment."""
