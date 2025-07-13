@@ -2,8 +2,9 @@ from typing import Any
 
 import jax
 import jax.numpy as jnp
-from flax import struct
+import numpy as np
 
+from flax import struct
 from gymnax.environments import environment, spaces
 
 
@@ -115,3 +116,21 @@ class DiscreteTimeLQR(environment.Environment[EnvState, EnvParams]):
                 "time": spaces.Discrete(params.max_steps_in_episode),
             }
         )
+
+
+def is_controllable(A, B):
+    dim_x = A.shape[0]
+    W = np.copy(B)
+    for _ in range(1, dim_x):
+        W = np.hstack((W, A @ B))
+        A = A @ B
+    return np.linalg.matrix_rank(W) == dim_x
+
+
+def is_stable(A, B):
+    pos_eig_vals = np.linalg.eigvals(A + B @ np.eye(B.shape[0]))
+    neg_eig_vals = np.linalg.eigvals(A + B @ -np.eye(B.shape[0]))
+    return (
+        np.all(np.abs(pos_eig_vals) < 1)
+        and np.all(np.abs(neg_eig_vals) < 1)
+    )
